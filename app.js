@@ -122,7 +122,7 @@ function mostrarMensaje(mensaje) {
     temporizadorToast = setTimeout(() => toast.classList.remove('visible'), 4000);
 }
 
-// Cargar inventario al iniciar
+
 renderizarInventario();
 
 // -------------------- CONTROL DE CONEXIÓN (ONLINE / OFFLINE) --------------------
