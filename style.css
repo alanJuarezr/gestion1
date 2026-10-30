@@ -120,7 +120,7 @@ input:focus {
     display: block;
 }
 
-/* Botones de Interacción (IXD) */
+/* Botones */
 .actions {
     display: flex;
     justify-content: flex-end;

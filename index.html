@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <!-- Encabezado Principal (UI) -->
+    
     <header class="top">
         <div class="brand">
             <h1>Farmacia "El Ángel"</h1>
@@ -19,10 +19,10 @@
         <span class="status online" id="status">En línea</span>
     </header>
 
-    <!-- Contenido Principal -->
+    
     <main class="main-container">
         
-        <!-- Panel de Registro / Búsqueda (Lado Cliente UI) -->
+        <!-- Panel de Registro / Búsqueda -->
         <section class="panel">
             <h2>Gestión de Catálogo / Productos</h2>
             <form id="form" novalidate>
@@ -51,14 +51,14 @@
             </form>
         </section>
 
-        <!-- Panel de Visualización del Catálogo (UX & Interacción) -->
+        <!-- Panel de Visualización del Catálogo -->
         <section class="panel">
             <div class="panel-header">
                 <h2>Inventario Local (<span id="contador">0</span>)</h2>
             </div>
             
             <ul id="lista" class="lista-productos">
-                <!-- Los elementos se cargarán visualmente aquí -->
+                
             </ul>
             
             <p id="vacio" class="vacio-msj">No hay productos registrados en el sistema.</p>
@@ -66,7 +66,7 @@
 
     </main>
 
-    <!-- Notificación flotante para interacciones (Toast UX) -->
+    <!-- Notificación flotante -->
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="app.js"></script>
