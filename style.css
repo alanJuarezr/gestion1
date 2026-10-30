@@ -1,0 +1,199 @@
+:root {
+    --bg-primary: #f0f4f8;
+    --primary: #006666;       /* Verde clínico institucional */
+    --primary-dark: #004d4d;
+    --accent: #ff6b6b;
+    --text-main: #2b2d42;
+    --panel-bg: #ffffff;
+    --border-color: #cbd5e1;
+    --error-color: #ef4444;
+    --success-color: #10b981;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* Encabezado Responsivo */
+.top {
+    background-color: var(--primary);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.brand h1 {
+    font-size: 1.5rem;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Contenedor Principal en Grid Responsivo */
+.main-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr 1fr; /* Dos columnas en pantallas grandes */
+    }
+}
+
+/* Paneles (Tarjetas UI) */
+.panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.panel h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.2rem;
+    color: var(--primary-dark);
+    border-bottom: 2px solid var(--bg-primary);
+    padding-bottom: 8px;
+}
+
+/* Formularios y Campos */
+.field {
+    margin-bottom: 1.2rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 102, 102, 0.15);
+}
+
+.error {
+    font-size: 0.75rem;
+    color: var(--error-color);
+    margin-top: 4px;
+    display: block;
+}
+
+/* Botones de Interacción (IXD) */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-save {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-save:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-cancel {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+.btn-cancel:hover {
+    background-color: #cbd5e1;
+}
+
+/* Lista de Productos */
+.lista-productos {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.lista-productos li {
+    padding: 12px;
+    border-bottom: 1px solid #edf2f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.vacio-msj {
+    color: #94a3b8;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Toast de Alerta UX */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #1e293b;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.toast.visible {
+    opacity: 1;
+}
