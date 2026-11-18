@@ -1,150 +1,140 @@
 'use strict';
 
-const CLAVE_PRODUCTOS = 'farmacia_productos';
+const API_URL = 'api/medicamentos.php';
 const form = document.getElementById('form');
-const lista = document.getElementById('lista'); 
+const lista = document.getElementById('lista');
 const vacio = document.getElementById('vacio');
 const contador = document.getElementById('contador');
 const toast = document.getElementById('toast');
 const statusNet = document.getElementById('status');
+const formTitulo = document.getElementById('form-titulo');
+const btnCancel = document.getElementById('cancel');
 
-// -------------------- LECTURA Y GUARDADO (LocalStorage) --------------------
-const leerDatos = () => {
-    try { return JSON.parse(localStorage.getItem(CLAVE_PRODUCTOS)) || []; }
-    catch { return []; }
-};
+let medicamentosCache = [];
 
-const guardarDatos = (datos) => {
-    localStorage.setItem(CLAVE_PRODUCTOS, JSON.stringify(datos));
-};
-
-// -------------------- VALIDACIONES DEL FORMULARIO --------------------
-const reglas = {
-    codigo(v) {
-        if (!v) return 'El código es obligatorio';
-        if (v.length < 3) return 'Debe tener al menos 3 caracteres';
-        return '';
-    },
-    producto(v) {
-        if (!v) return 'Ingresa el nombre del producto';
-        if (v.length < 3) return 'El nombre es muy corto';
-        return '';
-    },
-    precio(v) {
-        if (!v) return 'Ingresa un precio';
-        if (isNaN(v) || Number(v) <= 0) return 'Escribe un precio válido';
-        return '';
+// 1. CARGAR MEDICAMENTOS DESDE MYSQL (GET)
+async function cargarMedicamentos() {
+    try {
+        const res = await fetch(API_URL);
+        medicamentosCache = await res.json();
+        renderizarInventario(medicamentosCache);
+    } catch (error) {
+        mostrarMensaje('Error al conectar con la base de datos');
     }
-};
-
-function validarCampo(input) {
-    const valor = input.value.trim();
-    const msj = reglas[input.name] ? reglas[input.name](valor) : '';
-    
-    const errElement = document.getElementById('err-' + input.name);
-    if (errElement) errElement.textContent = msj;
-
-    input.classList.toggle('invalido', !!msj);
-    input.classList.toggle('valido', !msj);
-
-    return !msj;
 }
 
-// Eventos de validación en tiempo real
-form.querySelectorAll('input').forEach(input => {
-    input.addEventListener('blur', () => validarCampo(input));
-    input.addEventListener('input', () => {
-        if (input.classList.contains('invalido')) validarCampo(input);
-    });
-});
-
-// -------------------- REGISTRO DE PRODUCTOS --------------------
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const cajas = [...form.querySelectorAll('input')];
-    const todoOk = cajas.map(validarCampo).every(Boolean);
-
-    if (!todoOk) {
-        const primerInvalido = cajas.find(i => i.classList.contains('invalido'));
-        if (primerInvalido) primerInvalido.focus();
-        return;
-    }
-
-    const nuevoProducto = {
-        codigo: form.codigo.value.trim(),
-        producto: form.producto.value.trim(),
-        precio: parseFloat(form.precio.value.trim()).toFixed(2)
-    };
-
-    let datos = leerDatos();
-    datos.push(nuevoProducto);
-    guardarDatos(datos);
-
-    mostrarMensaje('¡Producto guardado correctamente!');
-    form.reset();
-    
-    // Limpiar clases de validación
-    cajas.forEach(i => i.classList.remove('valido', 'invalido'));
-
-    renderizarInventario();
-});
-
-// -------------------- RENDERIZAR EN INTERFAZ (UX) --------------------
-function escaparHTML(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-}
-
-function renderizarInventario() {
-    const datos = leerDatos();
+function renderizarInventario(datos) {
     contador.textContent = datos.length;
     vacio.hidden = datos.length > 0;
 
-    lista.innerHTML = datos.map(e => `
-       <li>
+    lista.innerHTML = datos.map(m => `
+        <div class="item-card">
             <div>
-                <strong>${escaparHTML(e.producto)}</strong><br>
-                <small>Cód: ${escaparHTML(e.codigo)}</small>
+                <strong>${m.nombre}</strong> <small>(${m.codigo})</small><br>
+                <small style="color:#64748b">${m.descripcion || 'Sin descripción'}</small><br>
+                <span style="color:var(--primary); font-weight:bold">$${parseFloat(m.precio).toFixed(2)}</span> · 
+                <small>Stock: <b>${m.stock}</b></small>
             </div>
-            <span style="font-weight: bold; color: var(--primary);">$${escaparHTML(e.precio)}</span>
-       </li>
+            <div class="item-actions">
+                <button class="btn-sm btn-edit" onclick="editarMedicamento(${m.id})">Editar</button>
+                <button class="btn-sm btn-del" onclick="eliminarMedicamento(${m.id})">Eliminar</button>
+            </div>
+        </div>
     `).join('');
 }
 
-// -------------------- MENSAJES TOAST (UX) --------------------
+// 2. GUARDAR O ACTUALIZAR (POST / PUT)
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('med-id').value;
+
+    const payload = {
+        id: id || null,
+        codigo: form.codigo.value.trim(),
+        nombre: form.nombre.value.trim(),
+        descripcion: form.descripcion.value.trim(),
+        precio: form.precio.value,
+        stock: form.stock.value
+    };
+
+    if (!payload.codigo || !payload.nombre || !payload.precio || payload.stock === '') {
+        mostrarMensaje('Completa todos los campos obligatorios (*)');
+        return;
+    }
+
+    const metodo = id ? 'PUT' : 'POST';
+
+    const res = await fetch(API_URL, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    const resultado = await res.json();
+    mostrarMensaje(resultado.message);
+
+    if (resultado.status === 'ok') {
+        resetearFormulario();
+        cargarMedicamentos();
+    }
+});
+
+// 3. PREPARAR EDICIÓN
+window.editarMedicamento = (id) => {
+    const med = medicamentosCache.find(m => m.id == id);
+    if (!med) return;
+
+    document.getElementById('med-id').value = med.id;
+    form.codigo.value = med.codigo;
+    form.nombre.value = med.nombre;
+    form.descripcion.value = med.descripcion || '';
+    form.precio.value = med.precio;
+    form.stock.value = med.stock;
+
+    formTitulo.textContent = 'Editar Medicamento';
+    btnCancel.hidden = false;
+};
+
+// 4. ELIMINAR (DELETE)
+window.eliminarMedicamento = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar este medicamento?')) return;
+
+    const res = await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
+    const resultado = await res.json();
+    mostrarMensaje(resultado.message);
+    cargarMedicamentos();
+};
+
+function resetearFormulario() {
+    form.reset();
+    document.getElementById('med-id').value = '';
+    formTitulo.textContent = 'Registrar Medicamento';
+    btnCancel.hidden = true;
+}
+
+btnCancel.addEventListener('click', resetearFormulario);
+
+// Toast y Estado de Red
 let temporizadorToast;
 function mostrarMensaje(mensaje) {
     toast.textContent = mensaje;
     toast.classList.add('visible');
-
     clearTimeout(temporizadorToast);
-    temporizadorToast = setTimeout(() => toast.classList.remove('visible'), 4000);
+    temporizadorToast = setTimeout(() => toast.classList.remove('visible'), 3500);
 }
 
-
-renderizarInventario();
-
-// -------------------- CONTROL DE CONEXIÓN (ONLINE / OFFLINE) --------------------
 function actualizarEstadoRed() {
-    if (navigator.onLine) {
-        statusNet.textContent = 'En línea';
-        statusNet.className = 'status online';
-    } else {
-        statusNet.textContent = 'Sin conexión';
-        statusNet.className = 'status offline';
-    }
+    statusNet.textContent = navigator.onLine ? 'En línea' : 'Sin conexión';
 }
-
 window.addEventListener('online', actualizarEstadoRed);
 window.addEventListener('offline', actualizarEstadoRed);
 actualizarEstadoRed();
 
-// -------------------- REGISTRO DEL SERVICE WORKER --------------------
+// Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-        .then(res => console.log('Service Worker registrado con éxito:', res.scope))
-        .catch(err => console.log('Error al registrar el Service Worker:', err));
+        navigator.serviceWorker.register('sw.js').catch(console.error);
     });
 }
+
+cargarMedicamentos();
