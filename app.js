@@ -138,3 +138,67 @@ if ('serviceWorker' in navigator) {
 }
 
 cargarMedicamentos();
+
+// --- CONTROL DE SESIÓN Y LOGIN ---
+const loginModal = document.getElementById('login-modal');
+const formLogin = document.getElementById('form-login');
+const userInfoContainer = document.getElementById('user-info-container');
+
+function verificarSesion() {
+    const sesion = localStorage.getItem('farmacia_sesion');
+    
+    if (sesion) {
+        // Si ya inició sesión, ocultamos el modal y mostramos quién entró con un botón de salir
+        loginModal.classList.add('oculto');
+        const usuario = JSON.parse(sesion);
+        
+        userInfoContainer.innerHTML = `
+            <div style="color: white; font-size: 0.9rem; text-align: right;">
+                <span>👤 <b>${usuario.nombre}</b></span><br>
+                <button onclick="cerrarSesion()" style="background: #ef4444; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-top: 3px;">Cerrar Sesión</button>
+            </div>
+        `;
+    } else {
+        // Si no hay sesión, mostramos el modal de login
+        loginModal.classList.remove('oculto');
+        userInfoContainer.innerHTML = '';
+    }
+}
+
+// Función global para cerrar sesión
+window.cerrarSesion = function() {
+    localStorage.removeItem('farmacia_sesion');
+    mostrarMensaje('Sesión cerrada correctamente');
+    verificarSesion();
+};
+
+formLogin.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+
+    try {
+        const res = await fetch('api/login.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await res.json();
+
+        if (res.ok && data.status === 'ok') {
+            localStorage.setItem('farmacia_sesion', JSON.stringify(data.usuario));
+            mostrarMensaje(data.message);
+            verificarSesion();
+        } else {
+            mostrarMensaje(data.message || 'Credenciales incorrectas');
+        }
+    } catch (err) {
+        console.error("Error en fetch login:", err);
+        mostrarMensaje('Error de conexión con la API de login');
+    }
+});
+
+// Ejecutar verificación al cargar
+verificarSesion();

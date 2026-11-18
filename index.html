@@ -14,7 +14,12 @@
             <h1>Farmacia "El Ángel"</h1>
             <p class="subtitle">Sistema Integral de Gestión</p>
         </div>
-        <span class="status online" id="status">En línea</span>
+        
+        <!-- Contenedor del estado y botón de cerrar sesión -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="user-info-container"></div>
+            <span class="status online" id="status">En línea</span>
+        </div>
     </header>
 
     <!-- Navegación SPA para los 5 módulos del equipo -->
@@ -74,7 +79,37 @@
         </section>
     </main>
 
+   
+   
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- 1. Primero va el Modal de Login -->
+    <div id="login-modal" class="login-overlay">
+        <div class="login-card">
+            <h2>Acceso Administrativo</h2>
+            <p class="subtitle">Farmacia "El Ángel de tu Salud"</p>
+            
+            <form id="form-login">
+                <div class="field">
+                    <label for="login-email">Correo Electrónico</label>
+                    <input type="email" id="login-email" value="admin@farmacia.com" required>
+                </div>
+                <div class="field">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" value="admin123" required>
+                </div>
+                <button type="submit" class="btn btn-save" style="width: 100%; margin-top: 10px;">Ingresar al Sistema</button>
+            </form>
+            <small style="display:block; text-align:center; margin-top:15px; color:#64748b;">Credencial por defecto: admin@farmacia.com / admin123</small>
+        </div>
+    </div>
+
+    <!-- 2. Al final se carga el script para que detecte todos los elementos -->
     <script src="app.js"></script>
+</body>
+</html>
+
+
 </body>
 </html>
