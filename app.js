@@ -2,6 +2,7 @@
 
 const API_URL = 'api/medicamentos.php';
 const API_USUARIOS_URL = 'api/usuarios.php';
+const API_CLIENTES_URL = 'api/clientes.php';
 
 const form = document.getElementById('form');
 const lista = document.getElementById('lista');
@@ -25,8 +26,18 @@ const usrBtnCancel = document.getElementById('usr-cancel');
 const usrPassReq = document.getElementById('usr-pass-req');
 const usrPassAyuda = document.getElementById('usr-pass-ayuda');
 
+// Elementos de módulo Clientes
+const viewClientes = document.getElementById('view-clientes');
+const formCliente = document.getElementById('form-cliente');
+const cliLista = document.getElementById('cli-lista');
+const cliVacio = document.getElementById('cli-vacio');
+const cliContador = document.getElementById('cli-contador');
+const cliFormTitulo = document.getElementById('cli-form-titulo');
+const cliBtnCancel = document.getElementById('cli-cancel');
+
 let medicamentosCache = [];
 let usuariosCache = [];
+let clientesCache = [];
 
 // NAVEGACIÓN ENTRE PESTAÑAS
 function cambiarPestana(tab) {
@@ -35,13 +46,21 @@ function cambiarPestana(tab) {
     });
 
     const esUsuarios = tab === 'usuarios';
-    viewMedicamentos.hidden = esUsuarios;
+    const esClientes = tab === 'clientes';
+    const esMedicamentos = tab === 'medicamentos';
+
+    viewMedicamentos.hidden = !esMedicamentos;
     viewUsuarios.hidden = !esUsuarios;
-    viewMedicamentos.style.display = esUsuarios ? 'none' : '';
+    viewClientes.hidden = !esClientes;
+
+    viewMedicamentos.style.display = esMedicamentos ? '' : 'none';
     viewUsuarios.style.display = esUsuarios ? '' : 'none';
+    viewClientes.style.display = esClientes ? '' : 'none';
 
     if (esUsuarios) {
         cargarUsuarios();
+    } else if (esClientes) {
+        cargarClientes();
     } else {
         cargarMedicamentos();
     }
@@ -306,6 +325,169 @@ function resetearFormularioUsuario() {
 }
 
 usrBtnCancel.addEventListener('click', resetearFormularioUsuario);
+
+
+
+
+
+// --- CRUD GESTIÓN DE CLIENTES ---
+
+function validarDatosCliente({ nombre, telefono, email, direccion }) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!nombre) {
+        return 'El nombre completo del cliente es obligatorio';
+    }
+    if (nombre.length > 100) {
+        return 'El nombre no puede superar los 100 caracteres';
+    }
+    if (telefono && telefono.length > 20) {
+        return 'El teléfono no puede superar los 20 caracteres';
+    }
+    if (email && (email.length > 100 || !emailRegex.test(email))) {
+        return 'Ingresa un correo electrónico válido (máx. 100 caracteres)';
+    }
+    if (direccion && direccion.length > 255) {
+        return 'La dirección no puede superar los 255 caracteres';
+    }
+    return null;
+}
+
+// 1. CARGAR CLIENTES DESDE LA BD (GET)
+async function cargarClientes() {
+    if (!cliLista) return;
+    try {
+        const res = await fetch(API_CLIENTES_URL);
+        const data = await res.json();
+
+        if (!res.ok) {
+            mostrarMensaje(data.message || 'Error al cargar clientes');
+            return;
+        }
+
+        clientesCache = Array.isArray(data) ? data : (data.clientes || []);
+        renderizarClientes(clientesCache);
+    } catch (error) {
+        mostrarMensaje('Error al conectar con la API de clientes');
+    }
+}
+
+function renderizarClientes(datos) {
+    cliContador.textContent = datos.length;
+    cliVacio.hidden = datos.length > 0;
+
+    cliLista.innerHTML = datos.map(c => `
+        <div class="item-card">
+            <div>
+                <strong>${c.nombre}</strong><br>
+                <small style="color:#64748b">Tel: ${c.telefono || '—'} · Correo: ${c.email || '—'}</small><br>
+                <small style="color:#475569">${c.direccion || 'Sin dirección'}</small>
+                ${c.creado_en ? `<br><small style="color:#94a3b8">Registrado: ${c.creado_en}</small>` : ''}
+            </div>
+            <div class="item-actions">
+                <button type="button" class="btn-sm btn-edit" onclick="editarCliente(${c.id})">Editar</button>
+                <button type="button" class="btn-sm btn-del" onclick="eliminarCliente(${c.id})">Eliminar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 2. GUARDAR O ACTUALIZAR CLIENTE (POST/PUT)
+if (formCliente) {
+    formCliente.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('cli-id').value;
+        const nombre = document.getElementById('cli-nombre').value.trim();
+        const telefono = document.getElementById('cli-telefono').value.trim();
+        const email = document.getElementById('cli-email').value.trim();
+        const direccion = document.getElementById('cli-direccion').value.trim();
+
+        const errorValidacion = validarDatosCliente({ nombre, telefono, email, direccion });
+        if (errorValidacion) {
+            mostrarMensaje(errorValidacion);
+            return;
+        }
+
+        const payload = {
+            id: id ? Number(id) : null,
+            nombre,
+            telefono,
+            email,
+            direccion
+        };
+
+        const metodo = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(API_CLIENTES_URL, {
+                method: metodo,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const resultado = await res.json();
+            mostrarMensaje(resultado.message || 'Operación completada');
+
+            if (res.ok && resultado.status === 'ok') {
+                resetearFormularioCliente();
+                cargarClientes();
+            }
+        } catch (error) {
+            mostrarMensaje('Error al guardar el cliente');
+        }
+    });
+}
+
+// 3. EDICIÓN CLIENTE
+window.editarCliente = (id) => {
+    const cli = clientesCache.find(c => c.id == id);
+    if (!cli) return;
+
+    document.getElementById('cli-id').value = cli.id;
+    document.getElementById('cli-nombre').value = cli.nombre;
+    document.getElementById('cli-telefono').value = cli.telefono || '';
+    document.getElementById('cli-email').value = cli.email || '';
+    document.getElementById('cli-direccion').value = cli.direccion || '';
+
+    cliFormTitulo.textContent = 'Editar Cliente';
+    cliBtnCancel.hidden = false;
+};
+
+// 4. (DELETE)
+window.eliminarCliente = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar este cliente?')) return;
+
+    try {
+        const res = await fetch(`${API_CLIENTES_URL}?id=${id}`, { method: 'DELETE' });
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Cliente eliminado');
+
+        if (res.ok && resultado.status === 'ok') {
+            const idActual = document.getElementById('cli-id').value;
+            if (idActual && Number(idActual) === Number(id)) {
+                resetearFormularioCliente();
+            }
+            cargarClientes();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al eliminar el cliente');
+    }
+};
+
+function resetearFormularioCliente() {
+    formCliente.reset();
+    document.getElementById('cli-id').value = '';
+    cliFormTitulo.textContent = 'Registrar Cliente';
+    cliBtnCancel.hidden = true;
+}
+
+if (cliBtnCancel) {
+    cliBtnCancel.addEventListener('click', resetearFormularioCliente);
+}
+
+
+
+
 
 // Toast y Estado de Red
 let temporizadorToast;
