@@ -25,7 +25,7 @@
     <!-- Navegación SPA para los 5 módulos del equipo -->
     <nav class="navbar">
         <button type="button" class="nav-btn active" data-tab="medicamentos">Medicamentos</button>
-        <button type="button" class="nav-btn" disabled title="Módulo de Karla">Clientes</button>
+        <button type="button" class="nav-btn" data-tab="clientes" title="Módulo de Karla">Clientes</button>
         <button type="button" class="nav-btn" disabled title="Módulo de Marco">Proveedores</button>
         <button type="button" class="nav-btn" disabled title="Módulo de Carlos">Ventas</button>
         <button type="button" class="nav-btn" data-tab="usuarios" title="Módulo de Vanessa">Usuarios</button>
@@ -126,6 +126,52 @@
             <p id="usr-vacio" class="vacio-msj">No hay usuarios registrados en MySQL.</p>
         </section>
     </main>
+
+
+    <!-- VISTA 3: REGISTRO Y CATÁLOGO DE CLIENTES -- Karla -->
+    <main id="view-clientes" class="main-container" hidden>
+        <!-- Formulario CRUD Clientes -->
+        <section class="panel">
+            <h2 id="cli-form-titulo">Registrar Cliente</h2>
+            <form id="form-cliente" novalidate>
+                <input type="hidden" id="cli-id">
+
+                <div class="field">
+                    <label for="cli-nombre">Nombre Completo *</label>
+                    <input type="text" id="cli-nombre" name="nombre" maxlength="100" placeholder="Ej. María López" required>
+                </div>
+
+                <div class="row-fields">
+                    <div class="field">
+                        <label for="cli-telefono">Teléfono</label>
+                        <input type="text" id="cli-telefono" name="telefono" maxlength="20" placeholder="Ej. 4171234567">
+                    </div>
+                    <div class="field">
+                        <label for="cli-email">Correo Electrónico</label>
+                        <input type="email" id="cli-email" name="email" maxlength="100" placeholder="cliente@correo.com">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="cli-direccion">Dirección</label>
+                    <input type="text" id="cli-direccion" name="direccion" maxlength="255" placeholder="Calle, número, colonia...">
+                </div>
+
+                <div class="actions">
+                    <button type="submit" id="cli-save" class="btn btn-save">Guardar Cliente</button>
+                    <button type="button" id="cli-cancel" class="btn btn-cancel" hidden>Cancelar Edición</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Listado de Clientes en MySQL -->
+        <section class="panel">
+            <h2>Catálogo de Clientes (<span id="cli-contador">0</span>)</h2>
+            <div id="cli-lista" class="lista-productos"></div>
+            <p id="cli-vacio" class="vacio-msj">No hay clientes registrados en MySQL.</p>
+        </section>
+    </main>
+
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
