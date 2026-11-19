@@ -3,6 +3,10 @@ require_once 'conexion.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
+function longitudTexto($texto) {
+    return function_exists('mb_strlen') ? mb_strlen($texto, 'UTF-8') : strlen($texto);
+}
+
 switch ($metodo) {
     case 'GET':
         // Consultar un usuario por id o listar todos sin exponer password
@@ -45,22 +49,39 @@ switch ($metodo) {
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
-        if (
-            !$data ||
-            empty(trim($data['nombre'] ?? '')) ||
-            empty(trim($data['email'] ?? '')) ||
-            empty(trim($data['password'] ?? ''))
-        ) {
+        $nombreLimpio = trim($data['nombre'] ?? '');
+        $emailLimpio = trim($data['email'] ?? '');
+        $passwordLimpio = trim($data['password'] ?? '');
+        $rolInput = $data['rol'] ?? 'empleado';
+        $rol = in_array($rolInput, ['admin', 'empleado'], true) ? $rolInput : 'empleado';
+
+        if (!$data || $nombreLimpio === '' || $emailLimpio === '' || $passwordLimpio === '') {
             http_response_code(400);
             echo json_encode(["status" => "error", "message" => "Nombre, correo y contraseña son obligatorios"]);
             exit();
         }
 
-        $nombre = $conn->real_escape_string(trim($data['nombre']));
-        $email = $conn->real_escape_string(trim($data['email']));
-        $password = $conn->real_escape_string(trim($data['password']));
-        $rolInput = $data['rol'] ?? 'empleado';
-        $rol = in_array($rolInput, ['admin', 'empleado'], true) ? $rolInput : 'empleado';
+        if (longitudTexto($nombreLimpio) > 100 || longitudTexto($emailLimpio) > 100) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "El nombre y el correo no pueden superar los 100 caracteres"]);
+            exit();
+        }
+
+        if (!filter_var($emailLimpio, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "El correo electrónico no tiene un formato válido"]);
+            exit();
+        }
+
+        if (longitudTexto($passwordLimpio) < 6 || longitudTexto($passwordLimpio) > 255) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "La contraseña debe tener entre 6 y 255 caracteres"]);
+            exit();
+        }
+
+        $nombre = $conn->real_escape_string($nombreLimpio);
+        $email = $conn->real_escape_string($emailLimpio);
+        $password = $conn->real_escape_string($passwordLimpio);
 
         // Verificar si el correo ya existe
         $checkSql = "SELECT id FROM usuarios WHERE email = '$email'";
@@ -80,8 +101,8 @@ switch ($metodo) {
                 "message" => "Usuario registrado correctamente",
                 "usuario" => [
                     "id" => $nuevoId,
-                    "nombre" => trim($data['nombre']),
-                    "email" => trim($data['email']),
+                    "nombre" => $nombreLimpio,
+                    "email" => $emailLimpio,
                     "rol" => $rol
                 ]
             ]);
@@ -97,17 +118,38 @@ switch ($metodo) {
         $data = json_decode($rawInput, true);
 
         $id = isset($data['id']) ? (int) $data['id'] : (isset($_GET['id']) ? (int) $_GET['id'] : 0);
+        $nombreLimpio = trim($data['nombre'] ?? '');
+        $emailLimpio = trim($data['email'] ?? '');
+        $passwordLimpio = trim($data['password'] ?? '');
+        $rolInput = $data['rol'] ?? 'empleado';
+        $rol = in_array($rolInput, ['admin', 'empleado'], true) ? $rolInput : 'empleado';
 
-        if ($id <= 0 || !$data || empty(trim($data['nombre'] ?? '')) || empty(trim($data['email'] ?? ''))) {
+        if ($id <= 0 || !$data || $nombreLimpio === '' || $emailLimpio === '') {
             http_response_code(400);
             echo json_encode(["status" => "error", "message" => "ID, nombre y correo son obligatorios"]);
             exit();
         }
 
-        $nombre = $conn->real_escape_string(trim($data['nombre']));
-        $email = $conn->real_escape_string(trim($data['email']));
-        $rolInput = $data['rol'] ?? 'empleado';
-        $rol = in_array($rolInput, ['admin', 'empleado'], true) ? $rolInput : 'empleado';
+        if (longitudTexto($nombreLimpio) > 100 || longitudTexto($emailLimpio) > 100) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "El nombre y el correo no pueden superar los 100 caracteres"]);
+            exit();
+        }
+
+        if (!filter_var($emailLimpio, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "El correo electrónico no tiene un formato válido"]);
+            exit();
+        }
+
+        if ($passwordLimpio !== '' && (longitudTexto($passwordLimpio) < 6 || longitudTexto($passwordLimpio) > 255)) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "La contraseña debe tener entre 6 y 255 caracteres"]);
+            exit();
+        }
+
+        $nombre = $conn->real_escape_string($nombreLimpio);
+        $email = $conn->real_escape_string($emailLimpio);
 
         // Verificar que el usuario exista
         $existeRes = $conn->query("SELECT id FROM usuarios WHERE id = $id");
@@ -126,8 +168,8 @@ switch ($metodo) {
         }
 
         // Solo actualizar password si se envía no vacío
-        if (!empty(trim($data['password'] ?? ''))) {
-            $password = $conn->real_escape_string(trim($data['password']));
+        if ($passwordLimpio !== '') {
+            $password = $conn->real_escape_string($passwordLimpio);
             $sql = "UPDATE usuarios SET nombre = '$nombre', email = '$email', password = '$password', rol = '$rol' WHERE id = $id";
         } else {
             $sql = "UPDATE usuarios SET nombre = '$nombre', email = '$email', rol = '$rol' WHERE id = $id";

@@ -37,6 +37,8 @@ function cambiarPestana(tab) {
     const esUsuarios = tab === 'usuarios';
     viewMedicamentos.hidden = esUsuarios;
     viewUsuarios.hidden = !esUsuarios;
+    viewMedicamentos.style.display = esUsuarios ? 'none' : '';
+    viewUsuarios.style.display = esUsuarios ? '' : 'none';
 
     if (esUsuarios) {
         cargarUsuarios();
@@ -153,6 +155,24 @@ btnCancel.addEventListener('click', resetearFormulario);
 
 // --- CRUD GESTIÓN DE USUARIOS ---
 
+function validarDatosUsuario({ id, nombre, email, password }) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!nombre || !email || (!id && !password)) {
+        return 'Completa nombre, correo y contraseña';
+    }
+    if (nombre.length > 100) {
+        return 'El nombre no puede superar los 100 caracteres';
+    }
+    if (email.length > 100 || !emailRegex.test(email)) {
+        return 'Ingresa un correo electrónico válido (máx. 100 caracteres)';
+    }
+    if (password && (password.length < 6 || password.length > 255)) {
+        return 'La contraseña debe tener entre 6 y 255 caracteres';
+    }
+    return null;
+}
+
 // 1. CARGAR USUARIOS DESDE MYSQL (GET)
 async function cargarUsuarios() {
     try {
@@ -199,8 +219,9 @@ formUsuario.addEventListener('submit', async (e) => {
     const password = document.getElementById('usr-password').value.trim();
     const rol = document.getElementById('usr-rol').value;
 
-    if (!nombre || !email || (!id && !password)) {
-        mostrarMensaje('Completa nombre, correo y contraseña');
+    const errorValidacion = validarDatosUsuario({ id, nombre, email, password });
+    if (errorValidacion) {
+        mostrarMensaje(errorValidacion);
         return;
     }
 
@@ -369,24 +390,6 @@ formLogin.addEventListener('submit', async (e) => {
     } catch (err) {
         console.error("Error en fetch login:", err);
         mostrarMensaje('Error de conexión con la API de login');
-    }
-
-    function cambiarPestana(tab) {
-        navBtns.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
-        });
-
-        const esUsuarios = tab === 'usuarios';
-        viewMedicamentos.hidden = esUsuarios;
-        viewUsuarios.hidden = !esUsuarios;
-        viewMedicamentos.style.display = esUsuarios ? 'none' : '';
-        viewUsuarios.style.display = esUsuarios ? '' : 'none';
-
-        if (esUsuarios) {
-            cargarUsuarios();
-        } else {
-            cargarMedicamentos();
-        }
     }
 });
 
