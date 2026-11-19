@@ -4,7 +4,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
 $host = "127.0.0.1";
-$port = 3307; // Tu puerto configurado en XAMPP
+$port = 3306; // Tu puerto configurado en XAMPP
 $user = "root";
 $pass = "";
 $db   = "farmacia_db";
