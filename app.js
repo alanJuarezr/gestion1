@@ -1,6 +1,8 @@
 'use strict';
 
 const API_URL = 'api/medicamentos.php';
+const API_USUARIOS_URL = 'api/usuarios.php';
+
 const form = document.getElementById('form');
 const lista = document.getElementById('lista');
 const vacio = document.getElementById('vacio');
@@ -10,7 +12,42 @@ const statusNet = document.getElementById('status');
 const formTitulo = document.getElementById('form-titulo');
 const btnCancel = document.getElementById('cancel');
 
+// Elementos del módulo Usuarios
+const navBtns = document.querySelectorAll('.nav-btn[data-tab]');
+const viewMedicamentos = document.getElementById('view-medicamentos');
+const viewUsuarios = document.getElementById('view-usuarios');
+const formUsuario = document.getElementById('form-usuario');
+const usrLista = document.getElementById('usr-lista');
+const usrVacio = document.getElementById('usr-vacio');
+const usrContador = document.getElementById('usr-contador');
+const usrFormTitulo = document.getElementById('usr-form-titulo');
+const usrBtnCancel = document.getElementById('usr-cancel');
+const usrPassReq = document.getElementById('usr-pass-req');
+const usrPassAyuda = document.getElementById('usr-pass-ayuda');
+
 let medicamentosCache = [];
+let usuariosCache = [];
+
+// NAVEGACIÓN ENTRE PESTAÑAS
+function cambiarPestana(tab) {
+    navBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    const esUsuarios = tab === 'usuarios';
+    viewMedicamentos.hidden = esUsuarios;
+    viewUsuarios.hidden = !esUsuarios;
+
+    if (esUsuarios) {
+        cargarUsuarios();
+    } else {
+        cargarMedicamentos();
+    }
+}
+
+navBtns.forEach(btn => {
+    btn.addEventListener('click', () => cambiarPestana(btn.dataset.tab));
+});
 
 // 1. CARGAR MEDICAMENTOS DESDE MYSQL (GET)
 async function cargarMedicamentos() {
@@ -43,7 +80,7 @@ function renderizarInventario(datos) {
     `).join('');
 }
 
-// 2. GUARDAR O ACTUALIZAR (POST / PUT)
+// 2. GUARDAR O ACTUALIZAR MEDICAMENTO (POST / PUT)
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('med-id').value;
@@ -79,7 +116,7 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-// 3. PREPARAR EDICIÓN
+// 3. PREPARAR EDICIÓN MEDICAMENTO
 window.editarMedicamento = (id) => {
     const med = medicamentosCache.find(m => m.id == id);
     if (!med) return;
@@ -95,7 +132,7 @@ window.editarMedicamento = (id) => {
     btnCancel.hidden = false;
 };
 
-// 4. ELIMINAR (DELETE)
+// 4. ELIMINAR MEDICAMENTO (DELETE)
 window.eliminarMedicamento = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este medicamento?')) return;
 
@@ -113,6 +150,141 @@ function resetearFormulario() {
 }
 
 btnCancel.addEventListener('click', resetearFormulario);
+
+// --- CRUD GESTIÓN DE USUARIOS ---
+
+// 1. CARGAR USUARIOS DESDE MYSQL (GET)
+async function cargarUsuarios() {
+    try {
+        const res = await fetch(API_USUARIOS_URL);
+        const data = await res.json();
+
+        if (!res.ok || data.status !== 'ok') {
+            mostrarMensaje(data.message || 'Error al cargar usuarios');
+            return;
+        }
+
+        usuariosCache = data.usuarios || [];
+        renderizarUsuarios(usuariosCache);
+    } catch (error) {
+        mostrarMensaje('Error al conectar con la API de usuarios');
+    }
+}
+
+function renderizarUsuarios(datos) {
+    usrContador.textContent = datos.length;
+    usrVacio.hidden = datos.length > 0;
+
+    usrLista.innerHTML = datos.map(u => `
+        <div class="item-card">
+            <div>
+                <strong>${u.nombre}</strong> <small>(${u.email})</small><br>
+                <span style="color:var(--primary); font-weight:bold; text-transform:capitalize">${u.rol}</span>
+                ${u.creado_en ? ` · <small style="color:#64748b">${u.creado_en}</small>` : ''}
+            </div>
+            <div class="item-actions">
+                <button class="btn-sm btn-edit" onclick="editarUsuario(${u.id})">Editar</button>
+                <button class="btn-sm btn-del" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 2. GUARDAR O ACTUALIZAR USUARIO (POST / PUT)
+formUsuario.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('usr-id').value;
+    const nombre = document.getElementById('usr-nombre').value.trim();
+    const email = document.getElementById('usr-email').value.trim();
+    const password = document.getElementById('usr-password').value.trim();
+    const rol = document.getElementById('usr-rol').value;
+
+    if (!nombre || !email || (!id && !password)) {
+        mostrarMensaje('Completa nombre, correo y contraseña');
+        return;
+    }
+
+    const payload = {
+        id: id ? Number(id) : null,
+        nombre,
+        email,
+        rol
+    };
+
+    if (password) {
+        payload.password = password;
+    }
+
+    const metodo = id ? 'PUT' : 'POST';
+
+    try {
+        const res = await fetch(API_USUARIOS_URL, {
+            method: metodo,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Operación completada');
+
+        if (res.ok && resultado.status === 'ok') {
+            resetearFormularioUsuario();
+            cargarUsuarios();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al guardar el usuario');
+    }
+});
+
+// 3. PREPARAR EDICIÓN USUARIO
+window.editarUsuario = (id) => {
+    const usr = usuariosCache.find(u => u.id == id);
+    if (!usr) return;
+
+    document.getElementById('usr-id').value = usr.id;
+    document.getElementById('usr-nombre').value = usr.nombre;
+    document.getElementById('usr-email').value = usr.email;
+    document.getElementById('usr-password').value = '';
+    document.getElementById('usr-rol').value = usr.rol || 'empleado';
+
+    usrFormTitulo.textContent = 'Editar Usuario';
+    usrPassReq.textContent = '(opcional)';
+    usrPassAyuda.style.display = 'block';
+    usrBtnCancel.hidden = false;
+};
+
+// 4. ELIMINAR USUARIO (DELETE)
+window.eliminarUsuario = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
+
+    try {
+        const res = await fetch(`${API_USUARIOS_URL}?id=${id}`, { method: 'DELETE' });
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Usuario eliminado');
+
+        if (res.ok && resultado.status === 'ok') {
+            const idActual = document.getElementById('usr-id').value;
+            if (idActual && Number(idActual) === Number(id)) {
+                resetearFormularioUsuario();
+            }
+            cargarUsuarios();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al eliminar el usuario');
+    }
+};
+
+function resetearFormularioUsuario() {
+    formUsuario.reset();
+    document.getElementById('usr-id').value = '';
+    document.getElementById('usr-rol').value = 'empleado';
+    usrFormTitulo.textContent = 'Registrar Usuario';
+    usrPassReq.textContent = '*';
+    usrPassAyuda.style.display = 'none';
+    usrBtnCancel.hidden = true;
+}
+
+usrBtnCancel.addEventListener('click', resetearFormularioUsuario);
 
 // Toast y Estado de Red
 let temporizadorToast;
@@ -197,6 +369,24 @@ formLogin.addEventListener('submit', async (e) => {
     } catch (err) {
         console.error("Error en fetch login:", err);
         mostrarMensaje('Error de conexión con la API de login');
+    }
+
+    function cambiarPestana(tab) {
+        navBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+
+        const esUsuarios = tab === 'usuarios';
+        viewMedicamentos.hidden = esUsuarios;
+        viewUsuarios.hidden = !esUsuarios;
+        viewMedicamentos.style.display = esUsuarios ? 'none' : '';
+        viewUsuarios.style.display = esUsuarios ? '' : 'none';
+
+        if (esUsuarios) {
+            cargarUsuarios();
+        } else {
+            cargarMedicamentos();
+        }
     }
 });
 
