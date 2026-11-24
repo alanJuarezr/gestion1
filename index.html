@@ -26,7 +26,7 @@
     <nav class="navbar">
         <button type="button" class="nav-btn active" data-tab="medicamentos">Medicamentos</button>
         <button type="button" class="nav-btn" data-tab="clientes" title="Módulo de Karla">Clientes</button>
-        <button type="button" class="nav-btn" disabled title="Módulo de Marco">Proveedores</button>
+        <button type="button" class="nav-btn" data-tab="proveedores" title="Módulo de Marco">Proveedores</button>
         <button type="button" class="nav-btn" disabled title="Módulo de Carlos">Ventas</button>
         <button type="button" class="nav-btn" data-tab="usuarios" title="Módulo de Vanessa">Usuarios</button>
     </nav>
@@ -169,6 +169,51 @@
             <h2>Catálogo de Clientes (<span id="cli-contador">0</span>)</h2>
             <div id="cli-lista" class="lista-productos"></div>
             <p id="cli-vacio" class="vacio-msj">No hay clientes registrados en MySQL.</p>
+        </section>
+    </main>
+
+
+    <!-- VISTA 4: REGISTRO DE PROVEEDORES Y DISTRIBUIDORES -- Marco -->
+    <main id="view-proveedores" class="main-container" hidden>
+        <!-- Formulario CRUD Proveedores -->
+        <section class="panel">
+            <h2 id="prov-form-titulo">Registrar Proveedor</h2>
+            <form id="form-proveedor" novalidate>
+                <input type="hidden" id="prov-id">
+
+                <div class="field">
+                    <label for="prov-empresa">Empresa / Distribuidor *</label>
+                    <input type="text" id="prov-empresa" name="empresa" maxlength="100" placeholder="Ej. Distribuidora Médica del Bajío" required>
+                </div>
+
+                <div class="field">
+                    <label for="prov-contacto">Nombre de Contacto</label>
+                    <input type="text" id="prov-contacto" name="contacto" maxlength="100" placeholder="Ej. Ing. Roberto Ruiz">
+                </div>
+
+                <div class="row-fields">
+                    <div class="field">
+                        <label for="prov-telefono">Teléfono</label>
+                        <input type="text" id="prov-telefono" name="telefono" maxlength="20" placeholder="Ej. 4171234567">
+                    </div>
+                    <div class="field">
+                        <label for="prov-email">Correo Electrónico</label>
+                        <input type="email" id="prov-email" name="email" maxlength="100" placeholder="ventas@distribuidora.com">
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" id="prov-save" class="btn btn-save">Guardar Proveedor</button>
+                    <button type="button" id="prov-cancel" class="btn btn-cancel" hidden>Cancelar Edición</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Listado de Proveedores en MySQL -->
+        <section class="panel">
+            <h2>Proveedores Registrados (<span id="prov-contador">0</span>)</h2>
+            <div id="prov-lista" class="lista-productos"></div>
+            <p id="prov-vacio" class="vacio-msj">No hay proveedores registrados en MySQL.</p>
         </section>
     </main>
 
