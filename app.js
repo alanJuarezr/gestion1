@@ -3,6 +3,7 @@
 const API_URL = 'api/medicamentos.php';
 const API_USUARIOS_URL = 'api/usuarios.php';
 const API_CLIENTES_URL = 'api/clientes.php';
+const API_PROVEEDORES_URL = 'api/proveedores.php';
 
 const form = document.getElementById('form');
 const lista = document.getElementById('lista');
@@ -35,9 +36,19 @@ const cliContador = document.getElementById('cli-contador');
 const cliFormTitulo = document.getElementById('cli-form-titulo');
 const cliBtnCancel = document.getElementById('cli-cancel');
 
+// Elementos de módulo Proveedores
+const viewProveedores = document.getElementById('view-proveedores');
+const formProveedor = document.getElementById('form-proveedor');
+const provLista = document.getElementById('prov-lista');
+const provVacio = document.getElementById('prov-vacio');
+const provContador = document.getElementById('prov-contador');
+const provFormTitulo = document.getElementById('prov-form-titulo');
+const provBtnCancel = document.getElementById('prov-cancel');
+
 let medicamentosCache = [];
 let usuariosCache = [];
 let clientesCache = [];
+let proveedoresCache = [];
 
 // NAVEGACIÓN ENTRE PESTAÑAS
 function cambiarPestana(tab) {
@@ -47,20 +58,25 @@ function cambiarPestana(tab) {
 
     const esUsuarios = tab === 'usuarios';
     const esClientes = tab === 'clientes';
+    const esProveedores = tab === 'proveedores';
     const esMedicamentos = tab === 'medicamentos';
 
     viewMedicamentos.hidden = !esMedicamentos;
     viewUsuarios.hidden = !esUsuarios;
+    viewProveedores.hidden = !esProveedores;
     viewClientes.hidden = !esClientes;
 
     viewMedicamentos.style.display = esMedicamentos ? '' : 'none';
     viewUsuarios.style.display = esUsuarios ? '' : 'none';
     viewClientes.style.display = esClientes ? '' : 'none';
+    viewProveedores.style.display = esProveedores ? '' : 'none';
 
     if (esUsuarios) {
         cargarUsuarios();
     } else if (esClientes) {
         cargarClientes();
+        } else if (esProveedores) {
+        cargarProveedores();
     } else {
         cargarMedicamentos();
     }
@@ -485,7 +501,149 @@ if (cliBtnCancel) {
     cliBtnCancel.addEventListener('click', resetearFormularioCliente);
 }
 
+// --- CRUD GESTIÓN DE PROVEEDORES ---
 
+function validarDatosProveedor({ empresa, email }) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!empresa) {
+        return 'El nombre de la empresa es obligatorio';
+    }
+    if (empresa.length > 100) {
+        return 'La empresa no puede superar los 100 caracteres';
+    }
+    if (email && (email.length > 100 || !emailRegex.test(email))) {
+        return 'Ingresa un correo electrónico válido (máx. 100 caracteres)';
+    }
+    return null;
+}
+
+// 1. CARGAR PROVEEDORES DESDE LA BD (GET)
+async function cargarProveedores() {
+    try {
+        const res = await fetch(API_PROVEEDORES_URL);
+        const data = await res.json();
+
+        if (!res.ok) {
+            mostrarMensaje(data.message || 'Error al cargar proveedores');
+            return;
+        }
+
+        proveedoresCache = Array.isArray(data) ? data : (data.proveedores || []);
+        renderizarProveedores(proveedoresCache);
+    } catch (error) {
+        mostrarMensaje('Error al conectar con la API de proveedores');
+    }
+}
+
+function renderizarProveedores(datos) {
+    provContador.textContent = datos.length;
+    provVacio.hidden = datos.length > 0;
+
+    provLista.innerHTML = datos.map(p => `
+        <div class="item-card">
+            <div>
+                <strong>${p.empresa}</strong><br>
+                <small style="color:#475569">Contacto: ${p.contacto || '—'}</small><br>
+                <small style="color:#64748b">Tel: ${p.telefono || '—'} · Correo: ${p.email || '—'}</small>
+                ${p.creado_en ? `<br><small style="color:#94a3b8">Registrado: ${p.creado_en}</small>` : ''}
+            </div>
+            <div class="item-actions">
+                <button type="button" class="btn-sm btn-edit" onclick="editarProveedor(${p.id})">Editar</button>
+                <button type="button" class="btn-sm btn-del" onclick="eliminarProveedor(${p.id})">Eliminar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 2. GUARDAR O ACTUALIZAR PROVEEDOR (POST/PUT)
+formProveedor.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('prov-id').value;
+    const empresa = document.getElementById('prov-empresa').value.trim();
+    const contacto = document.getElementById('prov-contacto').value.trim();
+    const telefono = document.getElementById('prov-telefono').value.trim();
+    const email = document.getElementById('prov-email').value.trim();
+
+    const errorValidacion = validarDatosProveedor({ empresa, email });
+    if (errorValidacion) {
+        mostrarMensaje(errorValidacion);
+        return;
+    }
+
+    const payload = {
+        id: id ? Number(id) : null,
+        empresa,
+        contacto,
+        telefono,
+        email
+    };
+
+    const metodo = id ? 'PUT' : 'POST';
+
+    try {
+        const res = await fetch(API_PROVEEDORES_URL, {
+            method: metodo,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Operación completada');
+
+        if (res.ok && resultado.status === 'ok') {
+            resetearFormularioProveedor();
+            cargarProveedores();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al guardar el proveedor');
+    }
+});
+
+// 3. EDICIÓN PROVEEDOR
+window.editarProveedor = (id) => {
+    const prov = proveedoresCache.find(p => p.id == id);
+    if (!prov) return;
+
+    document.getElementById('prov-id').value = prov.id;
+    document.getElementById('prov-empresa').value = prov.empresa;
+    document.getElementById('prov-contacto').value = prov.contacto || '';
+    document.getElementById('prov-telefono').value = prov.telefono || '';
+    document.getElementById('prov-email').value = prov.email || '';
+
+    provFormTitulo.textContent = 'Editar Proveedor';
+    provBtnCancel.hidden = false;
+};
+
+// 4. ELIMINAR PROVEEDOR (DELETE)
+window.eliminarProveedor = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar este proveedor?')) return;
+
+    try {
+        const res = await fetch(`${API_PROVEEDORES_URL}?id=${id}`, { method: 'DELETE' });
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Proveedor eliminado');
+
+        if (res.ok && resultado.status === 'ok') {
+            const idActual = document.getElementById('prov-id').value;
+            if (idActual && Number(idActual) === Number(id)) {
+                resetearFormularioProveedor();
+            }
+            cargarProveedores();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al eliminar el proveedor');
+    }
+};
+
+function resetearFormularioProveedor() {
+    formProveedor.reset();
+    document.getElementById('prov-id').value = '';
+    provFormTitulo.textContent = 'Registrar Proveedor';
+    provBtnCancel.hidden = true;
+}
+
+provBtnCancel.addEventListener('click', resetearFormularioProveedor);
 
 
 
