@@ -1,9 +1,15 @@
+
+/**
+ * Copyright (c) 2026 Farmacia "El Ángel". Todos los derechos reservados.
+ */
+
 'use strict';
 
 const API_URL = 'api/medicamentos.php';
 const API_USUARIOS_URL = 'api/usuarios.php';
 const API_CLIENTES_URL = 'api/clientes.php';
 const API_PROVEEDORES_URL = 'api/proveedores.php';
+const API_VENTAS_URL = 'api/ventas.php';
 
 const form = document.getElementById('form');
 const lista = document.getElementById('lista');
@@ -18,6 +24,13 @@ const btnCancel = document.getElementById('cancel');
 const navBtns = document.querySelectorAll('.nav-btn[data-tab]');
 const viewMedicamentos = document.getElementById('view-medicamentos');
 const viewUsuarios = document.getElementById('view-usuarios');
+const viewVentas = document.getElementById('view-ventas');
+const formVenta = document.getElementById('form-vent');
+const ventLista = document.getElementById('vent-lista');
+const ventVacio = document.getElementById('vent-vacio');
+const ventContador = document.getElementById('vent-contador');
+const ventFormTitulo = document.getElementById('vent-form-titulo');
+const ventBtnCancel = document.getElementById('vent-cancel');
 const formUsuario = document.getElementById('form-usuario');
 const usrLista = document.getElementById('usr-lista');
 const usrVacio = document.getElementById('usr-vacio');
@@ -49,6 +62,8 @@ let medicamentosCache = [];
 let usuariosCache = [];
 let clientesCache = [];
 let proveedoresCache = [];
+let ventasCache = [];
+let usuarioSesionId = '';
 
 // NAVEGACIÓN ENTRE PESTAÑAS
 function cambiarPestana(tab) {
@@ -58,15 +73,18 @@ function cambiarPestana(tab) {
 
     const esUsuarios = tab === 'usuarios';
     const esClientes = tab === 'clientes';
+    const esVentas = tab === 'ventas';
     const esProveedores = tab === 'proveedores';
     const esMedicamentos = tab === 'medicamentos';
 
     viewMedicamentos.hidden = !esMedicamentos;
     viewUsuarios.hidden = !esUsuarios;
+    viewVentas.hidden = !esVentas;
     viewProveedores.hidden = !esProveedores;
     viewClientes.hidden = !esClientes;
 
     viewMedicamentos.style.display = esMedicamentos ? '' : 'none';
+    viewVentas.style.display = esVentas ? '' : 'none';
     viewUsuarios.style.display = esUsuarios ? '' : 'none';
     viewClientes.style.display = esClientes ? '' : 'none';
     viewProveedores.style.display = esProveedores ? '' : 'none';
@@ -75,8 +93,11 @@ function cambiarPestana(tab) {
         cargarUsuarios();
     } else if (esClientes) {
         cargarClientes();
-        } else if (esProveedores) {
+    } else if (esProveedores) {
         cargarProveedores();
+    } else if (esVentas) {
+        cargarVentas();
+
     } else {
         cargarMedicamentos();
     }
@@ -645,6 +666,132 @@ function resetearFormularioProveedor() {
 
 provBtnCancel.addEventListener('click', resetearFormularioProveedor);
 
+// --- CRUD GESTIÓN DE VENTAS ---
+
+
+async function cargarVentas() {
+    try {
+        const res = await fetch(API_VENTAS_URL);
+        const data = await res.json();
+
+        if (!res.ok) {
+            mostrarMensaje(data.message || 'Error al cargar ventas');
+            return;
+        }
+
+        ventasCache = Array.isArray(data) ? data : (data.ventas || []);
+        renderizarVentas(ventasCache);
+
+    } catch (error) {
+        mostrarMensaje('Error al conectar con la API de ventas');
+    }
+}
+
+formVenta.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('vent-id').value;
+    const usuarioId = document.getElementById('vent-usuario-id').value;
+    const total = document.getElementById('vent-total').value.trim();
+    const fecha = document.getElementById('vent-fecha').value;
+
+    if (!usuarioId) {
+        mostrarMensaje('Debes iniciar sesión para registrar una venta');
+        return;
+    }
+    if (!total || Number(total) < 0 || !fecha) {
+        mostrarMensaje('Completa el total y la fecha de la venta');
+        return;
+    }
+
+    const payload = {
+        id: id ? Number(id) : null,
+        usuario_id: Number(usuarioId),
+        total: Number(total),
+        fecha
+    };
+
+    try {
+        const res = await fetch(API_VENTAS_URL, {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Operación completada');
+
+        if (res.ok && resultado.status === 'ok') {
+            resetearFormularioVenta();
+            cargarVentas();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al guardar la venta');
+    }
+});
+
+function renderizarVentas(datos) {
+    ventContador.textContent = datos.length;
+    ventVacio.hidden = datos.length > 0;
+
+    ventLista.innerHTML = datos.map(v => `
+            <div class="item-card">
+                <div>
+                    <strong>$${parseFloat(v.total).toFixed(2)}</strong><br>
+                    <small style="color:#64748b">Fecha: ${v.fecha.trim(5) || '—'} · Usuario: ${v.usuario_id}</small>
+                </div>
+                <div class="item-actions">
+                    <button type="button" class="btn-sm btn-edit" onclick="editarVenta(${v.id})">Editar</button>
+                    <button type="button" class="btn-sm btn-del" onclick="eliminarVenta(${v.id})">Eliminar</button>
+                </div>
+            </div>
+        `).join('');
+}
+
+ventBtnCancel.addEventListener('click', resetearFormularioVenta);
+
+window.editarVenta = (id) => {
+    const venta = ventasCache.find(v => v.id == id);
+    if (!venta) return;
+
+    document.getElementById('vent-id').value = venta.id;
+    document.getElementById('vent-total').value = venta.total;
+    document.getElementById('vent-fecha').value = venta.fecha ? venta.fecha.substring(0, 10) : '';
+    document.getElementById('vent-usuario-id').value = venta.usuario_id;
+
+    ventFormTitulo.textContent = 'Editar Venta';
+    ventBtnCancel.hidden = false;
+};
+
+window.eliminarVenta = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar esta venta?')) return;
+
+    try {
+        const res = await fetch(`${API_VENTAS_URL}?id=${id}`, { method: 'DELETE' });
+        const resultado = await res.json();
+        mostrarMensaje(resultado.message || 'Venta eliminada');
+
+        if (res.ok && resultado.status === 'ok') {
+            const idActual = document.getElementById('vent-id').value;
+            if (idActual && Number(idActual) === Number(id)) {
+                resetearFormularioVenta();
+            }
+            cargarVentas();
+        }
+    } catch (error) {
+        mostrarMensaje('Error al eliminar la venta');
+    }
+};
+
+function resetearFormularioVenta() {
+    formVenta.reset();
+    document.getElementById('vent-id').value = '';
+    document.getElementById('vent-usuario-id').value = usuarioSesionId;
+    ventFormTitulo.textContent = 'Registrar Venta';
+    ventBtnCancel.hidden = true;
+}
+
+
+
 
 
 // Toast y Estado de Red
@@ -679,12 +826,14 @@ const userInfoContainer = document.getElementById('user-info-container');
 
 function verificarSesion() {
     const sesion = localStorage.getItem('farmacia_sesion');
-    
+
     if (sesion) {
         // Si ya inició sesión, ocultamos el modal y mostramos quién entró con un botón de salir
         loginModal.classList.add('oculto');
         const usuario = JSON.parse(sesion);
-        
+        usuarioSesionId = usuario.id ? String(usuario.id) : '';
+        document.getElementById('vent-usuario-id').value = usuarioSesionId;
+
         userInfoContainer.innerHTML = `
             <div style="color: white; font-size: 0.9rem; text-align: right;">
                 <span>👤 <b>${usuario.nombre}</b></span><br>
@@ -693,13 +842,15 @@ function verificarSesion() {
         `;
     } else {
         // Si no hay sesión, mostramos el modal de login
+        usuarioSesionId = '';
+        document.getElementById('vent-usuario-id').value = '';
         loginModal.classList.remove('oculto');
         userInfoContainer.innerHTML = '';
     }
 }
 
 // Función global para cerrar sesión
-window.cerrarSesion = function() {
+window.cerrarSesion = function () {
     localStorage.removeItem('farmacia_sesion');
     mostrarMensaje('Sesión cerrada correctamente');
     verificarSesion();
@@ -707,7 +858,7 @@ window.cerrarSesion = function() {
 
 formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
 
@@ -717,7 +868,7 @@ formLogin.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-        
+
         const data = await res.json();
 
         if (res.ok && data.status === 'ok') {

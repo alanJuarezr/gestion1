@@ -1,4 +1,9 @@
 <?php
+
+/**
+ * Copyright (c) 2026 Farmacia "El Ángel". Todos los derechos reservados.
+ */
+
 require_once 'conexion.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];

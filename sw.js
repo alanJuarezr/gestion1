@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2026 Farmacia "El Ángel". Todos los derechos reservados.
+ */
+
 const CACHE_NAME = 'farmacia-angel-v1';
 
 // Archivos esenciales que se guardarán en la memoria caché del navegador
