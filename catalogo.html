@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catálogo — Farmacia "El Ángel de tu Salud"</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body class="modo-lectura">
+  <header class="angel-header">
+    <div class="angel-header-inner">
+      <div class="angel-brand">
+        <div class="angel-logo" aria-hidden="true">+</div>
+        <div>
+          <span class="angel-tag">CATÁLOGO DIGITAL · SOLO LECTURA</span>
+          <h1>Farmacia "El Ángel de tu Salud"</h1>
+          <p class="angel-subtitle">Consulta de existencias y precios de medicamentos</p>
+        </div>
+      </div>
+
+      <div class="angel-actions">
+        <span id="estado-red" class="angel-badge online">En línea</span>
+        <a href="index.html" class="angel-btn-admin">Acceso Administrador</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="angel-contenedor">
+    <section class="angel-panel">
+      <div class="angel-toolbar">
+        <div>
+          <h2>Medicamentos Disponibles (<span id="total-items">0</span>)</h2>
+          <p class="angel-ayuda">Vista informativa de consulta. Los cambios de inventario se realizan desde administración.</p>
+        </div>
+
+        <div class="angel-buscador">
+          <input
+            type="search"
+            id="buscar-medicamento"
+            placeholder="Buscar por nombre, código o presentación..."
+            aria-label="Buscar medicamento"
+          />
+        </div>
+      </div>
+
+      <div class="angel-aviso">
+        <strong>Nota de orientación:</strong> Los precios y existencias son de consulta. Los medicamentos que requieran receta médica se dispensan conforme a la normativa sanitaria vigente.
+      </div>
+
+      <div id="grid-medicamentos" class="angel-grid">
+        <p class="angel-estado">Cargando catálogo...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="angel-footer">
+    <p>Farmacia "El Ángel de tu Salud" · Aplicación Web Progresiva (PWA)</p>
+  </footer>
+
+  <script src="catalogo.js"></script>
+</body>
+</html>

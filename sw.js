@@ -2,16 +2,17 @@
  * Copyright (c) 2026 Farmacia "El Ángel". Todos los derechos reservados.
  */
 
-const CACHE_NAME = 'farmacia-angel-v1';
+const CACHE_NAME = 'farmacia-angel-v2';
 
 // Archivos esenciales que se guardarán en la memoria caché del navegador
 const ARCHIVOS_CACHE = [
     './',
     'index.html',
+    'catalogo.html',
     'style.css',
     'app.js',
-    'manifest.json',
-    'favicon.ico'
+    'catalogo.js',
+    'manifest.json'
 ];
 
 // 1. ETAPA DE INSTALACIÓN (Install)
