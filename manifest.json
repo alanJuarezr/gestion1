@@ -10,9 +10,16 @@
     "lang": "es",
     "icons": [
         {
-            "src": "favicon.ico",
-            "sizes": "64x64 32x32 24x24 16x16",
-            "type": "image/x-icon"
+            "src": "icons/estrella.png",
+            "sizes": "160x160",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/mujer.png",
+            "sizes": "160x160",
+            "type": "image/png",
+            "purpose": "any"
         }
     ]
 }
