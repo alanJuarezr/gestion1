@@ -17,6 +17,7 @@ if ($metodo === 'GET') {
         $datos[] = $fila;
     }
     echo json_encode($datos);
+    exit();
 }
 
 // 2. REGISTRAR PROVEEDOR (POST)
@@ -38,9 +39,11 @@ elseif ($metodo === 'POST') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Proveedor registrado correctamente"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al guardar proveedor: " . $conn->error]);
+        exit();
     }
 }
 
@@ -65,9 +68,11 @@ elseif ($metodo === 'PUT') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Proveedor actualizado correctamente"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al actualizar: " . $conn->error]);
+        exit();
     }
 }
 
@@ -83,9 +88,11 @@ elseif ($metodo === 'DELETE') {
     $sql = "DELETE FROM proveedores WHERE id=$id";
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Proveedor eliminado"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al eliminar: " . $conn->error]);
+        exit();
     }
 }
 ?>

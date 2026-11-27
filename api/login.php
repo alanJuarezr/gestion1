@@ -40,13 +40,16 @@ if ($metodo === 'POST') {
                     "rol" => $usuario['rol']
                 ]
             ]);
+            exit();
         } else {
             http_response_code(401);
             echo json_encode(["status" => "error", "message" => "Contraseña incorrecta"]);
+            exit();
         }
     } else {
         http_response_code(404);
         echo json_encode(["status" => "error", "message" => "El correo no está registrado"]);
+        exit();
     }
 }
 ?>

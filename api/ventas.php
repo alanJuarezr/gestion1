@@ -23,6 +23,7 @@ if ($metodo === 'GET') {
     }
 
     echo json_encode($ventas);
+    exit();
 }
 
 // 2. CREAR (POST) - Insertar una venta nueva
@@ -36,9 +37,11 @@ elseif ($metodo === 'POST') {
 
     if ($conn->query($sql)) {
         echo json_encode(['status' => 'ok', 'message' => 'Venta registrada']);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Error al guardar la evnta']);
+        exit();
     }
 }
 
@@ -54,9 +57,11 @@ elseif ($metodo === 'PUT') {
 
     if ($conn->query($sql)) {
         echo json_encode(['status' => 'ok', 'message' => 'Venta actualizada']);
+        exit();
     } else {
         http_response_code(500);
         echo json_encode(['status' => 'error', 'message' => $conn->error]);
+        exit();
     }
 }
 
@@ -66,9 +71,11 @@ elseif ($metodo === 'DELETE') {
 
     if ($conn->query("DELETE FROM ventas WHERE id=$id")) {
         echo json_encode(['status' => 'ok', 'message' => 'Venta eliminada']);
+        exit();
     } else {
         http_response_code(500);
         echo json_encode(['status' => 'error', 'message' => $conn->error]);
+        exit();
     }
 }
 ?>

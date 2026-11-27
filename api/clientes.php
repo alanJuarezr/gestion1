@@ -16,6 +16,7 @@ if ($metodo === 'GET') {
         $datos[] = $fila;
     }
     echo json_encode($datos);
+    exit();
 }
 
 elseif ($metodo === 'POST') {
@@ -36,9 +37,11 @@ elseif ($metodo === 'POST') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Cliente registrado correctamente"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al guardar cliente: " . $conn->error]);
+        exit();
     }
 }
 
@@ -62,9 +65,11 @@ elseif ($metodo === 'PUT') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Cliente actualizado correctamente"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al actualizar: " . $conn->error]);
+        exit();
     }
 }
 
@@ -79,9 +84,11 @@ elseif ($metodo === 'DELETE') {
     $sql = "DELETE FROM clientes WHERE id=$id";
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Cliente eliminado"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al eliminar: " . $conn->error]);
+        exit();
     }
 }
 ?>

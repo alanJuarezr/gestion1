@@ -17,6 +17,7 @@ if ($metodo === 'GET') {
         $datos[] = $fila;
     }
     echo json_encode($datos);
+    exit();
 }
 
 // 2. CREAR (POST) - Insertar un medicamento nuevo
@@ -33,9 +34,11 @@ elseif ($metodo === 'POST') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Medicamento registrado correctamente"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "Error al guardar (¿código duplicado?): " . $conn->error]);
+        exit();
     }
 }
 
@@ -53,9 +56,11 @@ elseif ($metodo === 'PUT') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Medicamento actualizado"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => $conn->error]);
+        exit();
     }
 }
 
@@ -66,9 +71,11 @@ elseif ($metodo === 'DELETE') {
 
     if ($conn->query($sql)) {
         echo json_encode(["status" => "ok", "message" => "Medicamento eliminado"]);
+        exit();
     } else {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => $conn->error]);
+        exit();
     }
 }
 ?>

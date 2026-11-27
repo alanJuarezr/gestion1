@@ -25,9 +25,11 @@ switch ($metodo) {
                     "status" => "ok",
                     "usuario" => $res->fetch_assoc()
                 ]);
+                exit();
             } else {
                 http_response_code(404);
                 echo json_encode(["status" => "error", "message" => "Usuario no encontrado"]);
+                exit();
             }
         } else {
             $sql = "SELECT id, nombre, email, rol, creado_en FROM usuarios ORDER BY id DESC";
@@ -42,9 +44,11 @@ switch ($metodo) {
                     "status" => "ok",
                     "usuarios" => $usuarios
                 ]);
+                exit();
             } else {
                 http_response_code(500);
                 echo json_encode(["status" => "error", "message" => "Error al consultar usuarios"]);
+                exit();
             }
         }
         break;
@@ -111,9 +115,11 @@ switch ($metodo) {
                     "rol" => $rol
                 ]
             ]);
+            exit();
         } else {
             http_response_code(500);
             echo json_encode(["status" => "error", "message" => "Error al registrar usuario"]);
+            exit();
         }
         break;
 
@@ -185,9 +191,11 @@ switch ($metodo) {
                 "status" => "ok",
                 "message" => "Usuario actualizado correctamente"
             ]);
+            exit();
         } else {
             http_response_code(500);
             echo json_encode(["status" => "error", "message" => "Error al actualizar usuario"]);
+            exit();
         }
         break;
 
@@ -215,15 +223,18 @@ switch ($metodo) {
                 "status" => "ok",
                 "message" => "Usuario eliminado correctamente"
             ]);
+            exit();
         } else {
             http_response_code(500);
             echo json_encode(["status" => "error", "message" => "Error al eliminar usuario"]);
+            exit();
         }
         break;
 
     default:
         http_response_code(405);
         echo json_encode(["status" => "error", "message" => "Método HTTP no permitido"]);
+        exit();
         break;
 }
 ?>
